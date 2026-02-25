@@ -1,0 +1,30 @@
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
+local Window = Library.CreateLib("My First Hub", "DarkTheme")
+
+-- This creates the side tab
+local Tab1 = Window:NewTab("Combat")
+local Section1 = Tab1:NewSection("Auto Farm")
+
+-- This adds a Speed Button
+Section1:NewButton("Speed Boost (100)", "Makes you move fast", function()
+    game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 100
+end)
+
+-- This adds an Auto Clicker Toggle
+Section1:NewToggle("Auto Clicker", "Automatically attacks", function(state)
+    _G.AutoClick = state
+    while _G.AutoClick do
+        local virtualUser = game:GetService("VirtualUser")
+        virtualUser:CaptureController()
+        virtualUser:ClickButton1(Vector2.new(0, 0))
+        task.wait(0.1)
+    end
+end)
+
+-- This adds a Teleport Tab
+local Tab2 = Window:NewTab("Teleport")
+local Section2 = Tab2:NewSection("Island TP")
+
+Section2:NewButton("TP to Jungle", "Teleports to Jungle Island", function()
+    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-1612, 36, 149)
+end)
