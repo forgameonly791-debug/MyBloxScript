@@ -8,92 +8,77 @@ local function ShowLoading()
     MainFrame.Position = UDim2.new(0.5, -200, 0.5, -75)
     MainFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 20) -- Navy Black
     MainFrame.BorderSizePixel = 2
-    MainFrame.BorderColor3 = Color3.fromRGB(255, 0, 0) -- Pure Red Border
+    MainFrame.BorderColor3 = Color3.fromRGB(255, 0, 0) -- Red Border
     
-    local Title = Instance.new("TextLabel", MainFrame)
-    Title.Size = UDim2.new(1, 0, 0, 50)
-    Title.Text = "WELCOME, DARK MASTER"
-    Title.TextColor3 = Color3.fromRGB(255, 255, 255) -- White
-    Title.BackgroundTransparency = 1
-    Title.TextSize = 22
-    Title.Font = Enum.Font.GothamBold
-
-    local BarBack = Instance.new("Frame", MainFrame)
-    BarBack.Size = UDim2.new(0.8, 0, 0, 8)
-    BarBack.Position = UDim2.new(0.1, 0, 0.7, 0)
-    BarBack.BackgroundColor3 = Color3.fromRGB(30, 30, 40) -- Dark Navy
-    
-    local BarFill = Instance.new("Frame", BarBack)
-    BarFill.Size = UDim2.new(0, 0, 1, 0)
+    local BarFill = Instance.new("Frame", MainFrame)
+    BarFill.Size = UDim2.new(0, 0, 0, 5)
+    BarFill.Position = UDim2.new(0, 0, 1, -5)
     BarFill.BackgroundColor3 = Color3.fromRGB(0, 255, 255) -- Aqua Blue
     
-    local Status = Instance.new("TextLabel", MainFrame)
-    Status.Size = UDim2.new(1, 0, 0, 30)
-    Status.Position = UDim2.new(0, 0, 0.8, 0)
-    Status.Text = "SYSTEM BOOTING..."
-    Status.TextColor3 = Color3.fromRGB(0, 255, 255) -- Aqua Blue
-    Status.BackgroundTransparency = 1
-    Status.TextSize = 12
+    local Title = Instance.new("TextLabel", MainFrame)
+    Title.Size = UDim2.new(1, 0, 1, 0)
+    Title.Text = "DARK MASTER: ALL SEAS ENABLED"
+    Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Title.BackgroundTransparency = 1
+    Title.TextSize = 20
+    Title.Font = Enum.Font.GothamBold
 
-    -- Loading Animation
-    BarFill:TweenSize(UDim2.new(0.4, 0, 1, 0), "Out", "Quad", 1)
-    task.wait(1)
-    Status.Text = "INJECTING RED PROTOCOL..."
-    Status.TextColor3 = Color3.fromRGB(255, 0, 0) -- Red
-    BarFill:TweenSize(UDim2.new(0.7, 0, 1, 0), "Out", "Quad", 1)
-    task.wait(1)
-    Status.Text = "DARK MASTER VERIFIED."
-    Status.TextColor3 = Color3.fromRGB(255, 255, 255) -- White
-    BarFill:TweenSize(UDim2.new(1, 0, 1, 0), "Out", "Quad", 1)
-    task.wait(0.8)
+    BarFill:TweenSize(UDim2.new(1, 0, 0, 5), "Out", "Quad", 2)
+    task.wait(2)
     ScreenGui:Destroy()
 end
 
 ShowLoading()
 
--- [[ START MAIN UI ]] --
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
--- Themes: "Midnight" is Navy/Black, "Bloodline" is Red/Black. I'll use a custom mix.
-local Window = Library.CreateLib("DARK MASTER HUB - V13", "Midnight") 
+local Window = Library.CreateLib("DARK MASTER HUB - V14", "Midnight") 
 
 -- [ TABS ] --
 local MainTab = Window:NewTab("Auto Farm")
+local SeaTab = Window:NewTab("Sea Travel")
 local VisualTab = Window:NewTab("Visuals & ESP")
 local PlayerTab = Window:NewTab("Pro Player")
-local SeaTab = Window:NewTab("Sea Travel")
 
--- [ 1. CUSTOM RED/AQUA VISUALS ] --
-local VisualSection = VisualTab:NewSection("Cyber Vision")
+-- [ 1. WORLD TRAVEL (WORKS FOR ALL SEAS) ] --
+local TravelSection = SeaTab:NewSection("Teleport to Worlds")
+
+TravelSection:NewButton("Travel to Sea 1 (Old World)", "Requires Level 0+", function()
+    game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("TravelMain")
+end)
+
+TravelSection:NewButton("Travel to Sea 2 (New World)", "Requires Level 700+", function()
+    game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("TravelDressrosa")
+end)
+
+TravelSection:NewButton("Travel to Sea 3 (Third Sea)", "Requires Level 1500+", function()
+    game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("TravelZou")
+end)
+
+-- [ 2. FRUIT & PLAYER ESP ] --
+local VisualSection = VisualTab:NewSection("Cyber ESP")
 
 VisualSection:NewButton("Aqua Fruit ESP", "Glows Aqua Blue", function()
     for _, v in pairs(game.Workspace:GetChildren()) do
         if v:IsA("Tool") or v:FindFirstChild("Handle") then
             local h = Instance.new("Highlight", v)
-            h.FillColor = Color3.fromRGB(0, 255, 255) -- Aqua Blue
-            h.OutlineColor = Color3.fromRGB(255, 255, 255) -- White
+            h.FillColor = Color3.fromRGB(0, 255, 255)
         end
     end
 end)
 
-VisualSection:NewButton("Red Player ESP", "Glows Dark Red", function()
+VisualSection:NewButton("Red Player ESP", "Glows Red", function()
     for _, p in pairs(game.Players:GetPlayers()) do
         if p ~= game.Players.LocalPlayer and p.Character then
             local h = Instance.new("Highlight", p.Character)
-            h.FillColor = Color3.fromRGB(255, 0, 0) -- Red
+            h.FillColor = Color3.fromRGB(255, 0, 0)
         end
     end
 end)
 
--- [ 2. SPEED & JUMP ] --
-local MoveSection = PlayerTab:NewSection("Movement")
-MoveSection:NewSlider("Cyber Speed", "Run like a god", 250, 16, function(s)
-    game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = s
-end)
-
--- [ 3. AUTO FARM + 360 SPIN ] --
-local FarmSection = MainTab:NewSection("Automation")
+-- [ 3. AUTO FARM ] --
+local FarmSection = MainTab:NewSection("Combat")
 _G.AttackSpeed = 0.1
-FarmSection:NewToggle("Auto Click (Red Aura)", "Attack & Spin", function(state)
+FarmSection:NewToggle("Auto Clicker (360°)", "Spin & Punch", function(state)
     _G.ProFarm = state
     while _G.ProFarm do
         game:GetService("VirtualUser"):CaptureController()
@@ -103,9 +88,17 @@ FarmSection:NewToggle("Auto Click (Red Aura)", "Attack & Spin", function(state)
     end
 end)
 
--- [ 4. FRUIT STORE ] --
-local FruitSection = VisualTab:NewSection("Inventory")
-FruitSection:NewToggle("Auto Store", "Saves to Storage", function(state)
+-- [ 4. PRO MOVEMENT ] --
+local MoveSection = PlayerTab:NewSection("Movement")
+MoveSection:NewSlider("Cyber Speed", "Run Fast", 250, 16, function(s)
+    game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = s
+end)
+
+MoveSection:NewButton("Infinite Jump", "Jump Air", function()
+    game:GetService("UserInputService").JumpRequest:Connect(function()
+        game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping")
+    end)
+end)
     _G.AutoStore = state
     while _G.AutoStore do
         for _, v in pairs(game.Players.LocalPlayer.Backpack:GetChildren()) do
