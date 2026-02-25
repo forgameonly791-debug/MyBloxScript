@@ -1,82 +1,124 @@
+-- [[ DARK MASTER CYBER CONFIG ]] --
+local CreatorName = "Dark Master"
+
+local function ShowLoading()
+    local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
+    local MainFrame = Instance.new("Frame", ScreenGui)
+    MainFrame.Size = UDim2.new(0, 400, 0, 150)
+    MainFrame.Position = UDim2.new(0.5, -200, 0.5, -75)
+    MainFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 20) -- Navy Black
+    MainFrame.BorderSizePixel = 2
+    MainFrame.BorderColor3 = Color3.fromRGB(255, 0, 0) -- Pure Red Border
+    
+    local Title = Instance.new("TextLabel", MainFrame)
+    Title.Size = UDim2.new(1, 0, 0, 50)
+    Title.Text = "WELCOME, DARK MASTER"
+    Title.TextColor3 = Color3.fromRGB(255, 255, 255) -- White
+    Title.BackgroundTransparency = 1
+    Title.TextSize = 22
+    Title.Font = Enum.Font.GothamBold
+
+    local BarBack = Instance.new("Frame", MainFrame)
+    BarBack.Size = UDim2.new(0.8, 0, 0, 8)
+    BarBack.Position = UDim2.new(0.1, 0, 0.7, 0)
+    BarBack.BackgroundColor3 = Color3.fromRGB(30, 30, 40) -- Dark Navy
+    
+    local BarFill = Instance.new("Frame", BarBack)
+    BarFill.Size = UDim2.new(0, 0, 1, 0)
+    BarFill.BackgroundColor3 = Color3.fromRGB(0, 255, 255) -- Aqua Blue
+    
+    local Status = Instance.new("TextLabel", MainFrame)
+    Status.Size = UDim2.new(1, 0, 0, 30)
+    Status.Position = UDim2.new(0, 0, 0.8, 0)
+    Status.Text = "SYSTEM BOOTING..."
+    Status.TextColor3 = Color3.fromRGB(0, 255, 255) -- Aqua Blue
+    Status.BackgroundTransparency = 1
+    Status.TextSize = 12
+
+    -- Loading Animation
+    BarFill:TweenSize(UDim2.new(0.4, 0, 1, 0), "Out", "Quad", 1)
+    task.wait(1)
+    Status.Text = "INJECTING RED PROTOCOL..."
+    Status.TextColor3 = Color3.fromRGB(255, 0, 0) -- Red
+    BarFill:TweenSize(UDim2.new(0.7, 0, 1, 0), "Out", "Quad", 1)
+    task.wait(1)
+    Status.Text = "DARK MASTER VERIFIED."
+    Status.TextColor3 = Color3.fromRGB(255, 255, 255) -- White
+    BarFill:TweenSize(UDim2.new(1, 0, 1, 0), "Out", "Quad", 1)
+    task.wait(0.8)
+    ScreenGui:Destroy()
+end
+
+ShowLoading()
+
+-- [[ START MAIN UI ]] --
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
-local Window = Library.CreateLib("2026 Ultimate Mega Hub", "Midnight")
+-- Themes: "Midnight" is Navy/Black, "Bloodline" is Red/Black. I'll use a custom mix.
+local Window = Library.CreateLib("DARK MASTER HUB - V13", "Midnight") 
 
 -- [ TABS ] --
 local MainTab = Window:NewTab("Auto Farm")
-local TPTab = Window:NewTab("Teleports")
-local VisualTab = Window:NewTab("ESP & Visuals")
-local ItemTab = Window:NewTab("Items & Weapons")
-local EventTab = Window:NewTab("Sea Events & Shop")
+local VisualTab = Window:NewTab("Visuals & ESP")
+local PlayerTab = Window:NewTab("Pro Player")
+local SeaTab = Window:NewTab("Sea Travel")
 
--- [ 1. AUTO FARM & STATS ] --
-local FarmSection = MainTab:NewSection("Leveling & Combat")
-FarmSection:NewToggle("Auto Clicker", "Fast Attack", function(state)
-    _G.Click = state
-    while _G.Click do
-        game:GetService("VirtualUser"):CaptureController()
-        game:GetService("VirtualUser"):ClickButton1(Vector2.new(0, 0))
-        task.wait(0.1)
-    end
-end)
+-- [ 1. CUSTOM RED/AQUA VISUALS ] --
+local VisualSection = VisualTab:NewSection("Cyber Vision")
 
-FarmSection:NewButton("Auto Stats (Melee)", "Maxes out Melee", function()
-    game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("AddPoint", "Melee", 3)
-end)
-
--- [ 2. TELEPORTS ] --
-local TPSection = TPTab:NewSection("Island Teleports")
-local islands = {
-    ["Starter Island"] = CFrame.new(973, 16, 1413),
-    ["Jungle"] = CFrame.new(-1612, 36, 149),
-    ["Pirate Village"] = CFrame.new(-1181, 4, 3850),
-    ["Marine Ford"] = CFrame.new(-2448, 73, 3999),
-    ["Sea Castle"] = CFrame.new(-5025, 286, -1395)
-}
-
-for name, pos in pairs(islands) do
-    TPSection:NewButton(name, "Fly to "..name, function()
-        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = pos
-    end)
-end
-
--- [ 3. ESP & VISUALS ] --
-local ESPSection = VisualTab:NewSection("ESP (Wallhacks)")
-ESPSection:NewButton("ESP Players", "See players through walls", function()
-    for _, p in pairs(game.Players:GetPlayers()) do
-        if p ~= game.Players.LocalPlayer and p.Character then
-            local box = Instance.new("Highlight", p.Character)
-            box.FillColor = Color3.new(1, 0, 0)
-        end
-    end
-end)
-
-ESPSection:NewButton("ESP Fruits", "Highlights dropped fruits", function()
+VisualSection:NewButton("Aqua Fruit ESP", "Glows Aqua Blue", function()
     for _, v in pairs(game.Workspace:GetChildren()) do
         if v:IsA("Tool") or v:FindFirstChild("Handle") then
-            local highlight = Instance.new("Highlight", v)
-            highlight.FillColor = Color3.new(0, 1, 0)
+            local h = Instance.new("Highlight", v)
+            h.FillColor = Color3.fromRGB(0, 255, 255) -- Aqua Blue
+            h.OutlineColor = Color3.fromRGB(255, 255, 255) -- White
         end
     end
 end)
 
--- [ 4. ITEMS & WEAPONS ] --
-local WeaponSection = ItemTab:NewSection("Weapon Mastery")
-WeaponSection:NewButton("Auto Equip Best Weapon", "Equips your strongest item", function()
-    for _, tool in pairs(game.Players.LocalPlayer.Backpack:GetChildren()) do
-        if tool:IsA("Tool") then
-            game.Players.LocalPlayer.Character.Humanoid:EquipTool(tool)
+VisualSection:NewButton("Red Player ESP", "Glows Dark Red", function()
+    for _, p in pairs(game.Players:GetPlayers()) do
+        if p ~= game.Players.LocalPlayer and p.Character then
+            local h = Instance.new("Highlight", p.Character)
+            h.FillColor = Color3.fromRGB(255, 0, 0) -- Red
         end
     end
 end)
 
--- [ 5. SHOP & SEA EVENTS ] --
-local ShopSection = EventTab:NewSection("Auto Gacha & Shop")
-ShopSection:NewButton("Buy Random Fruit", "Spends Beli for a Fruit", function()
-    game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("Cousin", "Buy")
+-- [ 2. SPEED & JUMP ] --
+local MoveSection = PlayerTab:NewSection("Movement")
+MoveSection:NewSlider("Cyber Speed", "Run like a god", 250, 16, function(s)
+    game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = s
 end)
 
-local SeaSection = EventTab:NewSection("Sea Events")
-SeaSection:NewToggle("Auto Sea Beast", "Attacks nearby Sea Beasts", function(state)
-    _G.SB = state
-    print("Sea Beast Farm: "..tostring(state))
+-- [ 3. AUTO FARM + 360 SPIN ] --
+local FarmSection = MainTab:NewSection("Automation")
+_G.AttackSpeed = 0.1
+FarmSection:NewToggle("Auto Click (Red Aura)", "Attack & Spin", function(state)
+    _G.ProFarm = state
+    while _G.ProFarm do
+        game:GetService("VirtualUser"):CaptureController()
+        game:GetService("VirtualUser"):ClickButton1(Vector2.new(0,0))
+        game.Workspace.CurrentCamera.CFrame = game.Workspace.CurrentCamera.CFrame * CFrame.Angles(0, math.rad(5), 0)
+        task.wait(_G.AttackSpeed)
+    end
 end)
+
+-- [ 4. FRUIT STORE ] --
+local FruitSection = VisualTab:NewSection("Inventory")
+FruitSection:NewToggle("Auto Store", "Saves to Storage", function(state)
+    _G.AutoStore = state
+    while _G.AutoStore do
+        for _, v in pairs(game.Players.LocalPlayer.Backpack:GetChildren()) do
+            if v:IsA("Tool") and v:FindFirstChild("Handle") then
+                game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("StoreFruit", v.Name, v)
+            end
+        end
+        task.wait(1)
+    end
+end)
+
+-- [ 5. SEA TRAVEL ] --
+local TravelSection = SeaTab:NewSection("World Warp")
+TravelSection:NewButton("Sea 1", "Main", function() game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("TravelMain") end)
+TravelSection:NewButton("Sea 2", "Dressrosa", function() game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("TravelDressrosa") end)
+TravelSection:NewButton("Sea 3", "Zou", function() game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("TravelZou") end)
