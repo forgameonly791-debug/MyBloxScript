@@ -1,30 +1,82 @@
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
-local Window = Library.CreateLib("My First Hub", "DarkTheme")
+local Window = Library.CreateLib("2026 Ultimate Mega Hub", "Midnight")
 
--- This creates the side tab
-local Tab1 = Window:NewTab("Combat")
-local Section1 = Tab1:NewSection("Auto Farm")
+-- [ TABS ] --
+local MainTab = Window:NewTab("Auto Farm")
+local TPTab = Window:NewTab("Teleports")
+local VisualTab = Window:NewTab("ESP & Visuals")
+local ItemTab = Window:NewTab("Items & Weapons")
+local EventTab = Window:NewTab("Sea Events & Shop")
 
--- This adds a Speed Button
-Section1:NewButton("Speed Boost (100)", "Makes you move fast", function()
-    game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 100
-end)
-
--- This adds an Auto Clicker Toggle
-Section1:NewToggle("Auto Clicker", "Automatically attacks", function(state)
-    _G.AutoClick = state
-    while _G.AutoClick do
-        local virtualUser = game:GetService("VirtualUser")
-        virtualUser:CaptureController()
-        virtualUser:ClickButton1(Vector2.new(0, 0))
+-- [ 1. AUTO FARM & STATS ] --
+local FarmSection = MainTab:NewSection("Leveling & Combat")
+FarmSection:NewToggle("Auto Clicker", "Fast Attack", function(state)
+    _G.Click = state
+    while _G.Click do
+        game:GetService("VirtualUser"):CaptureController()
+        game:GetService("VirtualUser"):ClickButton1(Vector2.new(0, 0))
         task.wait(0.1)
     end
 end)
 
--- This adds a Teleport Tab
-local Tab2 = Window:NewTab("Teleport")
-local Section2 = Tab2:NewSection("Island TP")
+FarmSection:NewButton("Auto Stats (Melee)", "Maxes out Melee", function()
+    game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("AddPoint", "Melee", 3)
+end)
 
-Section2:NewButton("TP to Jungle", "Teleports to Jungle Island", function()
-    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-1612, 36, 149)
+-- [ 2. TELEPORTS ] --
+local TPSection = TPTab:NewSection("Island Teleports")
+local islands = {
+    ["Starter Island"] = CFrame.new(973, 16, 1413),
+    ["Jungle"] = CFrame.new(-1612, 36, 149),
+    ["Pirate Village"] = CFrame.new(-1181, 4, 3850),
+    ["Marine Ford"] = CFrame.new(-2448, 73, 3999),
+    ["Sea Castle"] = CFrame.new(-5025, 286, -1395)
+}
+
+for name, pos in pairs(islands) do
+    TPSection:NewButton(name, "Fly to "..name, function()
+        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = pos
+    end)
+end
+
+-- [ 3. ESP & VISUALS ] --
+local ESPSection = VisualTab:NewSection("ESP (Wallhacks)")
+ESPSection:NewButton("ESP Players", "See players through walls", function()
+    for _, p in pairs(game.Players:GetPlayers()) do
+        if p ~= game.Players.LocalPlayer and p.Character then
+            local box = Instance.new("Highlight", p.Character)
+            box.FillColor = Color3.new(1, 0, 0)
+        end
+    end
+end)
+
+ESPSection:NewButton("ESP Fruits", "Highlights dropped fruits", function()
+    for _, v in pairs(game.Workspace:GetChildren()) do
+        if v:IsA("Tool") or v:FindFirstChild("Handle") then
+            local highlight = Instance.new("Highlight", v)
+            highlight.FillColor = Color3.new(0, 1, 0)
+        end
+    end
+end)
+
+-- [ 4. ITEMS & WEAPONS ] --
+local WeaponSection = ItemTab:NewSection("Weapon Mastery")
+WeaponSection:NewButton("Auto Equip Best Weapon", "Equips your strongest item", function()
+    for _, tool in pairs(game.Players.LocalPlayer.Backpack:GetChildren()) do
+        if tool:IsA("Tool") then
+            game.Players.LocalPlayer.Character.Humanoid:EquipTool(tool)
+        end
+    end
+end)
+
+-- [ 5. SHOP & SEA EVENTS ] --
+local ShopSection = EventTab:NewSection("Auto Gacha & Shop")
+ShopSection:NewButton("Buy Random Fruit", "Spends Beli for a Fruit", function()
+    game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("Cousin", "Buy")
+end)
+
+local SeaSection = EventTab:NewSection("Sea Events")
+SeaSection:NewToggle("Auto Sea Beast", "Attacks nearby Sea Beasts", function(state)
+    _G.SB = state
+    print("Sea Beast Farm: "..tostring(state))
 end)
