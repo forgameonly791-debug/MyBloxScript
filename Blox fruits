@@ -1,0 +1,479 @@
+-- Services
+local Workspace = game:GetService("Workspace")
+local Players = game:GetService("Players")
+local HttpService = game:GetService("HttpService")
+local TeleportService = game:GetService("TeleportService")
+local TweenService = game:GetService("TweenService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local CoreGui = game:GetService("CoreGui")
+local VirtualUser = game:GetService("VirtualUser")
+
+local LocalPlayer = Players.LocalPlayer
+local PlaceId = game.PlaceId
+local JobId = game.JobId
+
+-- Master Configuration
+local Config = {
+    WebhookUrl = "https://discord.com/api/webhooks/1549020751284408432/V5q17bfboLDmtpFNtZN5jDHZJ_aC0evPDEgXUrjPPgeFkYOm6pFom6apNQgbXv8JrIGl",
+    AutoServerHop = true,
+    FastScanDelay = 2,
+    LowPlayerSearch = true,
+    ShowESP = true,
+    AutoCollect = true,
+    AutoStore = true,
+    TweenSpeed = 350,
+    AntiAFK = true,
+    DetectNPCs = true,
+    TargetFruitOnly = ""
+}
+
+-- Updated Full Fruit Rarity & Color Database
+local FruitData = {
+    -- MYTHICAL
+    ["Kitsune"] = {Rarity = "Mythical", Color = Color3.fromRGB(255, 0, 128)},
+    ["Dragon"] = {Rarity = "Mythical", Color = Color3.fromRGB(255, 50, 50)},
+    ["Control"] = {Rarity = "Mythical", Color = Color3.fromRGB(0, 200, 255)},
+    ["Tiger"] = {Rarity = "Mythical", Color = Color3.fromRGB(255, 120, 0)},
+    ["Yeti"] = {Rarity = "Mythical", Color = Color3.fromRGB(220, 240, 255)},
+    ["Magnet"] = {Rarity = "Mythical", Color = Color3.fromRGB(180, 0, 220)},
+    ["Gas"] = {Rarity = "Mythical", Color = Color3.fromRGB(150, 0, 255)},
+    ["Spirit"] = {Rarity = "Mythical", Color = Color3.fromRGB(0, 255, 255)},
+    ["Venom"] = {Rarity = "Mythical", Color = Color3.fromRGB(170, 0, 255)},
+    ["Shadow"] = {Rarity = "Mythical", Color = Color3.fromRGB(80, 0, 120)},
+    ["Dough"] = {Rarity = "Mythical", Color = Color3.fromRGB(255, 230, 180)},
+    ["T-Rex"] = {Rarity = "Mythical", Color = Color3.fromRGB(0, 180, 100)},
+    ["Mammoth"] = {Rarity = "Mythical", Color = Color3.fromRGB(139, 69, 19)},
+    ["Gravity"] = {Rarity = "Mythical", Color = Color3.fromRGB(75, 0, 130)},
+
+    -- LEGENDARY
+    ["Blizzard"] = {Rarity = "Legendary", Color = Color3.fromRGB(180, 240, 255)},
+    ["Pain"] = {Rarity = "Legendary", Color = Color3.fromRGB(128, 0, 0)},
+    ["Lightning"] = {Rarity = "Legendary", Color = Color3.fromRGB(255, 255, 0)},
+    ["Portal"] = {Rarity = "Legendary", Color = Color3.fromRGB(0, 150, 255)},
+    ["Phoenix"] = {Rarity = "Legendary", Color = Color3.fromRGB(255, 69, 0)},
+    ["Sound"] = {Rarity = "Legendary", Color = Color3.fromRGB(255, 140, 0)},
+    ["Spider"] = {Rarity = "Legendary", Color = Color3.fromRGB(169, 169, 169)},
+    ["Creation"] = {Rarity = "Legendary", Color = Color3.fromRGB(255, 190, 200)},
+    ["Love"] = {Rarity = "Legendary", Color = Color3.fromRGB(255, 105, 180)},
+    ["Buddha"] = {Rarity = "Legendary", Color = Color3.fromRGB(255, 215, 0)},
+    ["Quake"] = {Rarity = "Legendary", Color = Color3.fromRGB(112, 128, 144)},
+    ["Magma"] = {Rarity = "Legendary", Color = Color3.fromRGB(255, 100, 0)},
+    ["Ghost"] = {Rarity = "Legendary", Color = Color3.fromRGB(224, 255, 255)},
+
+    -- RARE
+    ["Rubber"] = {Rarity = "Rare", Color = Color3.fromRGB(255, 20, 147)},
+    ["Light"] = {Rarity = "Rare", Color = Color3.fromRGB(255, 255, 150)},
+    ["Diamond"] = {Rarity = "Rare", Color = Color3.fromRGB(185, 242, 255)},
+    ["Eagle"] = {Rarity = "Rare", Color = Color3.fromRGB(205, 133, 63)},
+    ["Dark"] = {Rarity = "Rare", Color = Color3.fromRGB(50, 50, 50)},
+
+    -- UNCOMMON
+    ["Sand"] = {Rarity = "Uncommon", Color = Color3.fromRGB(238, 214, 175)},
+    ["Ice"] = {Rarity = "Uncommon", Color = Color3.fromRGB(173, 216, 230)},
+    ["Flame"] = {Rarity = "Uncommon", Color = Color3.fromRGB(255, 69, 0)},
+    ["Spike"] = {Rarity = "Uncommon", Color = Color3.fromRGB(144, 238, 144)},
+    ["Smoke"] = {Rarity = "Uncommon", Color = Color3.fromRGB(190, 190, 190)},
+
+    -- COMMON
+    ["Bomb"] = {Rarity = "Common", Color = Color3.fromRGB(105, 105, 105)},
+    ["Spring"] = {Rarity = "Common", Color = Color3.fromRGB(135, 206, 235)},
+    ["Blade"] = {Rarity = "Common", Color = Color3.fromRGB(192, 192, 192)},
+    ["Spin"] = {Rarity = "Common", Color = Color3.fromRGB(210, 180, 140)},
+    ["Rocket"] = {Rarity = "Common", Color = Color3.fromRGB(220, 20, 60)}
+}
+
+-- Helper function to match fruit names
+local function getFruitInfo(fullName)
+    for key, data in pairs(FruitData) do
+        if fullName:lower():find(key:lower()) then
+            return key, data
+        end
+    end
+    return fullName, {Rarity = "Unknown", Color = Color3.fromRGB(0, 255, 128)}
+end
+
+-- Persistent Storage Tracking
+local BlacklistFile = "VisitedServers.json"
+local FruitLogFile = "FruitServerHistory.json"
+local VisitedServers = {}
+local FruitServerHistory = {}
+
+if isfile and readfile then
+    if isfile(BlacklistFile) then
+        pcall(function() VisitedServers = HttpService:JSONDecode(readfile(BlacklistFile)) end)
+    end
+    if isfile(FruitLogFile) then
+        pcall(function() FruitServerHistory = HttpService:JSONDecode(readfile(FruitLogFile)) end)
+    end
+end
+
+VisitedServers[JobId] = os.time()
+if writefile then
+    pcall(function() writefile(BlacklistFile, HttpService:JSONEncode(VisitedServers)) end)
+end
+
+local function logFruitToServerHistory(fruitName)
+    FruitServerHistory[JobId] = {
+        Fruit = fruitName,
+        Time = os.date("%X"),
+        Place = PlaceId
+    }
+    if writefile then
+        pcall(function() writefile(FruitLogFile, HttpService:JSONEncode(FruitServerHistory)) end)
+    end
+end
+
+-- Screen GUI Creation
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "KiraMasterUI"
+ScreenGui.ResetOnSpawn = false
+pcall(function() ScreenGui.Parent = CoreGui end)
+if not ScreenGui.Parent then ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui") end
+
+-- Main Control Frame
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Size = UDim2.new(0, 360, 0, 300)
+MainFrame.Position = UDim2.new(0.05, 0, 0.2, 0)
+MainFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 24)
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.Parent = ScreenGui
+
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 10)
+UICorner.Parent = MainFrame
+
+local TitleLabel = Instance.new("TextLabel")
+TitleLabel.Size = UDim2.new(1, -20, 0, 35)
+TitleLabel.Position = UDim2.new(0, 10, 0, 0)
+TitleLabel.BackgroundTransparency = 1
+TitleLabel.Text = "KIRA SERVICES • MASTER SERVER HOPPER"
+TitleLabel.TextColor3 = Color3.fromRGB(255, 0, 128)
+TitleLabel.TextSize = 13
+TitleLabel.Font = Enum.Font.SourceSansBold
+TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+TitleLabel.Parent = MainFrame
+
+-- Live Status Display
+local StatusLabel = Instance.new("TextLabel")
+StatusLabel.Size = UDim2.new(1, -20, 0, 35)
+StatusLabel.Position = UDim2.new(0, 10, 0, 35)
+StatusLabel.BackgroundColor3 = Color3.fromRGB(28, 28, 38)
+StatusLabel.Text = "Status: Scanning Workspace..."
+StatusLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+StatusLabel.TextSize = 12
+StatusLabel.Font = Enum.Font.SourceSans
+StatusLabel.Parent = MainFrame
+
+local StatusCorner = Instance.new("UICorner")
+StatusCorner.CornerRadius = UDim.new(0, 6)
+StatusCorner.Parent = StatusLabel
+
+-- Toggle Button Builder
+local function createToggle(name, position, configKey)
+    local button = Instance.new("TextButton")
+    button.Size = UDim2.new(0.46, 0, 0, 32)
+    button.Position = position
+    button.BackgroundColor3 = Config[configKey] and Color3.fromRGB(0, 180, 100) or Color3.fromRGB(40, 40, 50)
+    button.Text = name .. ": " .. (Config[configKey] and "ON" or "OFF")
+    button.TextColor3 = Color3.fromRGB(255, 255, 255)
+    button.Font = Enum.Font.SourceSansBold
+    button.TextSize = 12
+    button.Parent = MainFrame
+
+    local btnCorner = Instance.new("UICorner")
+    btnCorner.CornerRadius = UDim.new(0, 6)
+    btnCorner.Parent = button
+
+    button.MouseButton1Click:Connect(function()
+        Config[configKey] = not Config[configKey]
+        button.BackgroundColor3 = Config[configKey] and Color3.fromRGB(0, 180, 100) or Color3.fromRGB(40, 40, 50)
+        button.Text = name .. ": " .. (Config[configKey] and "ON" or "OFF")
+    end)
+end
+
+createToggle("Auto Hop", UDim2.new(0, 10, 0, 78), "AutoServerHop")
+createToggle("ESP", UDim2.new(0.52, 0, 0, 78), "ShowESP")
+createToggle("Auto Collect", UDim2.new(0, 10, 0, 118), "AutoCollect")
+createToggle("Auto Store", UDim2.new(0.52, 0, 0, 118), "AutoStore")
+
+-- Server Hop Fruit Filter Box
+local TrackerBox = Instance.new("TextBox")
+TrackerBox.Size = UDim2.new(1, -20, 0, 32)
+TrackerBox.Position = UDim2.new(0, 10, 0, 158)
+TrackerBox.BackgroundColor3 = Color3.fromRGB(35, 35, 48)
+TrackerBox.Text = Config.TargetFruitOnly == "" and "Target Fruit Filter: [ALL FRUITS]" or "Target Fruit Filter: " .. Config.TargetFruitOnly
+TrackerBox.TextColor3 = Color3.fromRGB(255, 215, 0)
+TrackerBox.Font = Enum.Font.SourceSansBold
+TrackerBox.TextSize = 12
+TrackerBox.Parent = MainFrame
+
+local TrackerCorner = Instance.new("UICorner")
+TrackerCorner.CornerRadius = UDim.new(0, 6)
+TrackerCorner.Parent = TrackerBox
+
+TrackerBox.FocusLost:Connect(function()
+    Config.TargetFruitOnly = TrackerBox.Text
+    if Config.TargetFruitOnly == "" or Config.TargetFruitOnly == "Target Fruit Filter: [ALL FRUITS]" then
+        Config.TargetFruitOnly = ""
+        TrackerBox.Text = "Target Fruit Filter: [ALL FRUITS]"
+    end
+end)
+
+-- Force Hop Button
+local HopButton = Instance.new("TextButton")
+HopButton.Size = UDim2.new(1, -20, 0, 35)
+HopButton.Position = UDim2.new(0, 10, 0, 200)
+HopButton.BackgroundColor3 = Color3.fromRGB(255, 0, 128)
+HopButton.Text = "FORCE SERVER HOP NOW"
+HopButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+HopButton.Font = Enum.Font.SourceSansBold
+HopButton.TextSize = 13
+HopButton.Parent = MainFrame
+
+local HopCorner = Instance.new("UICorner")
+HopCorner.CornerRadius = UDim.new(0, 6)
+HopCorner.Parent = HopButton
+
+-- Notification Banner Setup
+local AlertBanner = Instance.new("Frame")
+AlertBanner.Name = "AlertBanner"
+AlertBanner.Size = UDim2.new(0, 320, 0, 75)
+AlertBanner.Position = UDim2.new(0.5, -160, 0.1, 0)
+AlertBanner.BackgroundColor3 = Color3.fromRGB(15, 15, 22)
+AlertBanner.BackgroundTransparency = 0.1
+AlertBanner.Visible = false
+AlertBanner.Parent = ScreenGui
+
+local AlertCorner = Instance.new("UICorner")
+AlertCorner.CornerRadius = UDim.new(0, 8)
+AlertCorner.Parent = AlertBanner
+
+local AlertStroke = Instance.new("UIStroke")
+AlertStroke.Color = Color3.fromRGB(255, 0, 128)
+AlertStroke.Thickness = 2
+AlertStroke.Parent = AlertBanner
+
+local AlertTitle = Instance.new("TextLabel")
+AlertTitle.Size = UDim2.new(1, 0, 0, 30)
+AlertTitle.BackgroundTransparency = 1
+AlertTitle.Text = "SYSTEM NOTIFIER"
+AlertTitle.TextColor3 = Color3.fromRGB(255, 215, 0)
+AlertTitle.TextSize = 16
+AlertTitle.Font = Enum.Font.SourceSansBold
+AlertTitle.Parent = AlertBanner
+
+local AlertText = Instance.new("TextLabel")
+AlertText.Size = UDim2.new(1, 0, 0, 40)
+AlertText.Position = UDim2.new(0, 0, 0, 30)
+AlertText.BackgroundTransparency = 1
+AlertText.Text = "Target Detected!"
+AlertText.TextColor3 = Color3.fromRGB(255, 255, 255)
+AlertText.TextSize = 14
+AlertText.Font = Enum.Font.SourceSans
+AlertText.Parent = AlertBanner
+
+local function showAlert(rawName, distance, category)
+    local cleanName, data = getFruitInfo(rawName)
+    AlertStroke.Color = data.Color
+    AlertTitle.Text = string.format("[%s] %s DETECTED!", data.Rarity:upper(), category or "FRUIT")
+    AlertText.Text = string.format("%s\nDistance: %d studs", cleanName, distance)
+    AlertBanner.Visible = true
+
+    task.delay(7, function() AlertBanner.Visible = false end)
+end
+
+-- Discord Webhook Engine
+local function sendWebhook(rawName, distance, category)
+    if Config.WebhookUrl == "" then return end
+
+    local cleanName, data = getFruitInfo(rawName)
+
+    local payload = HttpService:JSONEncode({
+        ["username"] = "Kira Master Notifier",
+        ["embeds"] = {{
+            ["title"] = string.format("%s Spawn Detected in Server!", category or "Fruit"),
+            ["description"] = string.format("**Fruit Name:** `%s`\n**Rarity:** %s\n**Distance:** %d studs\n**Server Job ID:** `%s`\n**Time:** %s", cleanName, data.Rarity, distance, JobId, os.date("%X")),
+            ["color"] = 16711808,
+            ["footer"] = {["text"] = "Automated Fruit & Server Hop System"}
+        }}
+    })
+
+    pcall(function()
+        local req = (syn and syn.request) or (http and http.request) or http_request or request
+        if req then
+            req({
+                Url = Config.WebhookUrl,
+                Method = "POST",
+                Headers = {["Content-Type"] = "application/json"},
+                Body = payload
+            })
+        end
+    end)
+end
+
+-- ESP System
+local function createESP(target, handle, labelText)
+    if not Config.ShowESP or handle:FindFirstChild("FruitESP") then return end
+
+    local _, data = getFruitInfo(labelText)
+
+    local highlight = Instance.new("Highlight")
+    highlight.Name = "FruitESP"
+    highlight.Adornee = target
+    highlight.FillColor = data.Color
+    highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+    highlight.Parent = handle
+
+    local billboard = Instance.new("BillboardGui")
+    billboard.Name = "FruitLabel"
+    billboard.Adornee = handle
+    billboard.Size = UDim2.new(0, 150, 0, 50)
+    billboard.StudsOffset = Vector3.new(0, 3, 0)
+    billboard.AlwaysOnTop = true
+
+    local textLabel = Instance.new("TextLabel")
+    textLabel.Size = UDim2.new(1, 0, 1, 0)
+    textLabel.BackgroundTransparency = 1
+    textLabel.TextColor3 = Color3.fromRGB(255, 255, 0)
+    textLabel.TextStrokeTransparency = 0
+    textLabel.TextSize = 14
+    textLabel.Font = Enum.Font.SourceSansBold
+    textLabel.Text = labelText
+    textLabel.Parent = billboard
+    billboard.Parent = handle
+end
+
+-- Anti-AFK Routine
+if Config.AntiAFK then
+    LocalPlayer.Idled:Connect(function()
+        VirtualUser:CaptureController()
+        VirtualUser:ClickButton2(Vector2.new(0, 0))
+    end)
+end
+
+-- Server Hopper Engine
+local function hopToNextServer()
+    StatusLabel.Text = "Status: Searching for next server..."
+    local sortOrder = Config.LowPlayerSearch and "Asc" or "Desc"
+    local apiUrl = string.format("https://games.roblox.com/v1/games/%d/servers/Public?sortOrder=%s&limit=100", PlaceId, sortOrder)
+
+    local success, response = pcall(function()
+        return HttpService:JSONDecode(game:HttpGet(apiUrl))
+    end)
+
+    if success and response and response.data then
+        for _, server in ipairs(response.data) do
+            if server.id ~= JobId and server.playing < server.maxPlayers and not VisitedServers[server.id] then
+                StatusLabel.Text = string.format("Status: Joining server (%d/%d players)...", server.playing, server.maxPlayers)
+
+                VisitedServers[server.id] = os.time()
+                if writefile then
+                    pcall(function() writefile(BlacklistFile, HttpService:JSONEncode(VisitedServers)) end)
+                end
+
+                TeleportService:TeleportToPlaceInstance(PlaceId, server.id, LocalPlayer)
+                return
+            end
+        end
+    end
+
+    task.wait(2)
+    hopToNextServer()
+end
+
+HopButton.MouseButton1Click:Connect(function()
+    hopToNextServer()
+end)
+
+-- Main Execution & Fruit Filtering Sequence
+local foundTarget = false
+
+for _, child in ipairs(Workspace:GetChildren()) do
+    if child:IsA("Tool") and (child.Name:find("Fruit") or child.Name:find("Pha-")) then
+        if Config.TargetFruitOnly == "" or child.Name:lower():find(Config.TargetFruitOnly:lower()) then
+            local handle = child:FindFirstChild("Handle") or child:FindFirstChildWhichIsA("BasePart")
+            if handle then
+                foundTarget = true
+
+                local playerPos = LocalPlayer.Character and LocalPlayer.Character.HumanoidRootPart.Position
+                local dist = playerPos and math.floor((playerPos - handle.Position).Magnitude) or 0
+
+                logFruitToServerHistory(child.Name)
+
+                createESP(child, handle, child.Name)
+                showAlert(child.Name, dist, "FRUIT SPAWN")
+                sendWebhook(child.Name, dist, "Fruit")
+
+                task.spawn(function()
+                    if Config.AutoCollect then
+                        local character = LocalPlayer.Character
+                        if character and character:FindFirstChild("HumanoidRootPart") then
+                            local root = character.HumanoidRootPart
+                            StatusLabel.Text = "Status: Collecting " .. child.Name .. "..."
+
+                            local tweenInfo = TweenInfo.new(dist / Config.TweenSpeed, Enum.EasingStyle.Linear)
+                            local tween = TweenService:Create(root, tweenInfo, {CFrame = handle.CFrame * CFrame.new(0, 2, 0)})
+
+                            tween:Play()
+                            tween.Completed:Wait()
+
+                            firetouchinterest(root, handle, 0)
+                            task.wait(0.1)
+                            firetouchinterest(root, handle, 1)
+
+                            if Config.AutoStore then
+                                task.wait(0.5)
+                                local storeRemote = ReplicatedStorage:FindFirstChild("Remotes") and ReplicatedStorage.Remotes:FindFirstChild("CommF_")
+                                if storeRemote then
+                                    storeRemote:InvokeServer("StoreFruit", child.Name, child)
+                                    StatusLabel.Text = "Status: Stored " .. child.Name .. "!"
+                                end
+                            end
+                        end
+                    end
+                end)
+                break
+            end
+        end
+    end
+end
+
+-- Check for Event NPCs if enabled and no fruit found
+if not foundTarget and Config.DetectNPCs then
+    local npcsFolder = Workspace:FindFirstChild("NPCs") or Workspace:FindFirstChild("Enemies")
+    if npcsFolder then
+        for _, npc in ipairs(npcsFolder:GetChildren()) do
+            if npc.Name:find("Magnet") or npc.Name:find("Boss") or npc.Name:find("Event") then
+                local root = npc:FindFirstChild("HumanoidRootPart") or npc:FindFirstChildWhichIsA("BasePart")
+                if root then
+                    foundTarget = true
+                    local playerPos = LocalPlayer.Character and LocalPlayer.Character.HumanoidRootPart.Position
+                    local dist = playerPos and math.floor((playerPos - root.Position).Magnitude) or 0
+
+                    createESP(npc, root, npc.Name)
+                    showAlert(npc.Name, dist, "EVENT NPC")
+                    sendWebhook(npc.Name, dist, "Event NPC")
+                    StatusLabel.Text = "Status: Event NPC Found (" .. npc.Name .. ")!"
+                    break
+                end
+            end
+        end
+    end
+end
+
+-- Fast Hop execution if no valid fruit was found
+if not foundTarget then
+    StatusLabel.Text = string.format("Status: Map empty or filter unmatched. Hopping in %d seconds...", Config.FastScanDelay)
+    task.delay(Config.FastScanDelay, function()
+        if Config.AutoServerHop and not foundTarget then
+            hopToNextServer()
+        end
+    end)
+else
+    if StatusLabel.Text:find("Scanning") or StatusLabel.Text:find("empty") then
+        StatusLabel.Text = "Status: Spawn Detected! Holding position."
+    end
+end
