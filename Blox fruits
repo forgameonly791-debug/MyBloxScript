@@ -8,6 +8,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local CoreGui = game:GetService("CoreGui")
 local VirtualUser = game:GetService("VirtualUser")
 local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
 
 local LocalPlayer = Players.LocalPlayer
 local PlaceId = game.PlaceId
@@ -16,16 +17,38 @@ local JobId = game.JobId
 -- Master Config
 local Config = {
     WebhookUrl = "https://discord.com/api/webhooks/1549020751284408432/V5q17bfboLDmtpFNtZN5jDHZJ_aC0evPDEgXUrjPPgeFkYOm6pFom6apNQgbXv8JrIGl",
+    -- Farm Settings
+    AutoFarmLevel = false,
+    AutoFarmNearest = false,
+    AutoEquipWeapon = true,
+    FarmDistance = 9,
+    TweenSpeed = 320,
+    -- Fruit Settings
+    AutoCollectFruits = true,
+    AutoStoreFruits = true,
+    ShowFruitESP = true,
+    TargetFruitOnly = "",
+    -- PvP Settings
+    PlayerESP = false,
+    SilentAim = false,
+    AutoClicker = false,
+    PvpTarget = "",
+    -- Server Settings
     AutoServerHop = false,
     FastScanDelay = 3,
-    LowPlayerSearch = true,
-    ShowESP = true,
-    AutoCollect = true,
-    AutoStore = true,
-    TweenSpeed = 300,
-    AntiAFK = true,
-    TargetRarity = "ALL", -- ALL, MYTHICAL, LEGENDARY, RARE
-    TargetFruitOnly = ""
+    AntiAFK = true
+}
+
+-- Aqua Blue Color Palette
+local AquaTheme = {
+    Background = Color3.fromRGB(10, 18, 26),
+    TopBar = Color3.fromRGB(14, 28, 40),
+    Sidebar = Color3.fromRGB(12, 22, 32),
+    Accent = Color3.fromRGB(0, 230, 255),
+    AccentGlow = Color3.fromRGB(0, 180, 220),
+    DarkContainer = Color3.fromRGB(16, 32, 46),
+    TextPrimary = Color3.fromRGB(240, 255, 255),
+    TextSecondary = Color3.fromRGB(140, 190, 210)
 }
 
 -- Comprehensive Fruit Database
@@ -89,38 +112,38 @@ local function getFruitInfo(fullName)
             return key, data
         end
     end
-    return fullName, {Rarity = "Unknown", Color = Color3.fromRGB(0, 255, 150)}
+    return fullName, {Rarity = "Unknown", Color = AquaTheme.Accent}
 end
 
--- Screen GUI Init
-if CoreGui:FindFirstChild("KiraV2UI") then CoreGui.KiraV2UI:Destroy() end
+-- GUI Setup
+if CoreGui:FindFirstChild("TaiyoHubUI") then CoreGui.TaiyoHubUI:Destroy() end
 
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "KiraV2UI"
+ScreenGui.Name = "TaiyoHubUI"
 ScreenGui.ResetOnSpawn = false
 pcall(function() ScreenGui.Parent = CoreGui end)
 if not ScreenGui.Parent then ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui") end
 
--- Main Window
+-- Main UI Frame
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 480, 0, 310)
-MainFrame.Position = UDim2.new(0.5, -240, 0.3, -155)
-MainFrame.BackgroundColor3 = Color3.fromRGB(12, 12, 18)
+MainFrame.Size = UDim2.new(0, 500, 0, 320)
+MainFrame.Position = UDim2.new(0.5, -250, 0.3, -160)
+MainFrame.BackgroundColor3 = AquaTheme.Background
 MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
 MainFrame.Parent = ScreenGui
 
 local MainCorner = Instance.new("UICorner")
-MainCorner.CornerRadius = UDim.new(0, 12)
+MainCorner.CornerRadius = UDim.new(0, 10)
 MainCorner.Parent = MainFrame
 
 local MainStroke = Instance.new("UIStroke")
-MainStroke.Color = Color3.fromRGB(255, 0, 128)
+MainStroke.Color = AquaTheme.Accent
 MainStroke.Thickness = 1.5
 MainStroke.Parent = MainFrame
 
--- Make Dragged Smoothly on Mobile
+-- Drag Control for Mobile
 local dragging, dragInput, dragStart, startPos
 MainFrame.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -146,32 +169,31 @@ UserInputService.InputEnded:Connect(function(input)
     end
 end)
 
--- Top Bar
+-- Header Bar
 local TopBar = Instance.new("Frame")
 TopBar.Size = UDim2.new(1, 0, 0, 40)
-TopBar.BackgroundColor3 = Color3.fromRGB(18, 18, 26)
+TopBar.BackgroundColor3 = AquaTheme.TopBar
 TopBar.Parent = MainFrame
 
 local TopCorner = Instance.new("UICorner")
-TopCorner.CornerRadius = UDim.new(0, 12)
+TopCorner.CornerRadius = UDim.new(0, 10)
 TopCorner.Parent = TopBar
 
 local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, -60, 1, 0)
+Title.Size = UDim2.new(1, -50, 1, 0)
 Title.Position = UDim2.new(0, 15, 0, 0)
 Title.BackgroundTransparency = 1
-Title.Text = "KIRA SERVICES • ADVANCED HUB v2.0"
-Title.TextColor3 = Color3.fromRGB(255, 0, 128)
+Title.Text = "TAIYO HUB • BLOX FRUITS V3.0"
+Title.TextColor3 = AquaTheme.Accent
 Title.TextSize = 13
 Title.Font = Enum.Font.GothamBold
 Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.Parent = TopBar
 
--- Close Button
 local CloseBtn = Instance.new("TextButton")
-CloseBtn.Size = UDim2.new(0, 30, 0, 30)
-CloseBtn.Position = UDim2.new(1, -35, 0, 5)
-CloseBtn.BackgroundColor3 = Color3.fromRGB(255, 40, 80)
+CloseBtn.Size = UDim2.new(0, 28, 0, 28)
+CloseBtn.Position = UDim2.new(1, -34, 0, 6)
+CloseBtn.BackgroundColor3 = Color3.fromRGB(220, 40, 60)
 CloseBtn.Text = "✕"
 CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 CloseBtn.Font = Enum.Font.GothamBold
@@ -179,18 +201,16 @@ CloseBtn.TextSize = 12
 CloseBtn.Parent = TopBar
 
 local CloseCorner = Instance.new("UICorner")
-CloseCorner.CornerRadius = UDim.new(0, 8)
+CloseCorner.CornerRadius = UDim.new(0, 6)
 CloseCorner.Parent = CloseBtn
 
-CloseBtn.MouseButton1Click:Connect(function()
-    ScreenGui:Destroy()
-end)
+CloseBtn.MouseButton1Click:Connect(function() ScreenGui:Destroy() end)
 
 -- Sidebar Navigation
 local Sidebar = Instance.new("Frame")
-Sidebar.Size = UDim2.new(0, 120, 1, -45)
-Sidebar.Position = UDim2.new(0, 5, 0, 42)
-Sidebar.BackgroundColor3 = Color3.fromRGB(16, 16, 24)
+Sidebar.Size = UDim2.new(0, 130, 1, -48)
+Sidebar.Position = UDim2.new(0, 6, 0, 44)
+Sidebar.BackgroundColor3 = AquaTheme.Sidebar
 Sidebar.Parent = MainFrame
 
 local SideCorner = Instance.new("UICorner")
@@ -198,12 +218,12 @@ SideCorner.CornerRadius = UDim.new(0, 8)
 SideCorner.Parent = Sidebar
 
 local Container = Instance.new("Frame")
-Container.Size = UDim2.new(1, -135, 1, -50)
-Container.Position = UDim2.new(0, 130, 0, 45)
+Container.Size = UDim2.new(1, -148, 1, -52)
+Container.Position = UDim2.new(0, 142, 0, 46)
 Container.BackgroundTransparency = 1
 Container.Parent = MainFrame
 
--- Tab System
+-- Tab System Builder
 local Tabs = {}
 local TabButtons = {}
 
@@ -212,7 +232,7 @@ local function createTab(name, active)
     page.Size = UDim2.new(1, 0, 1, 0)
     page.BackgroundTransparency = 1
     page.ScrollBarThickness = 3
-    page.ScrollBarImageColor3 = Color3.fromRGB(255, 0, 128)
+    page.ScrollBarImageColor3 = AquaTheme.Accent
     page.Visible = active
     page.Parent = Container
 
@@ -224,10 +244,10 @@ local function createTab(name, active)
 
     local btn = Instance.new("TextButton")
     btn.Size = UDim2.new(1, -10, 0, 32)
-    btn.Position = UDim2.new(0, 5, 0, #TabButtons * 38 + 5)
-    btn.BackgroundColor3 = active and Color3.fromRGB(255, 0, 128) or Color3.fromRGB(24, 24, 34)
+    btn.Position = UDim2.new(0, 5, 0, #TabButtons * 38 + 6)
+    btn.BackgroundColor3 = active and AquaTheme.Accent or AquaTheme.DarkContainer
     btn.Text = name
-    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.TextColor3 = active and Color3.fromRGB(10, 10, 15) or AquaTheme.TextPrimary
     btn.Font = Enum.Font.GothamBold
     btn.TextSize = 11
     btn.Parent = Sidebar
@@ -237,28 +257,29 @@ local function createTab(name, active)
     btnCorner.Parent = btn
 
     btn.MouseButton1Click:Connect(function()
-        for tName, tPage in pairs(Tabs) do
-            tPage.Visible = (tName == name)
-        end
+        for tName, tPage in pairs(Tabs) do tPage.Visible = (tName == name) end
         for _, b in ipairs(TabButtons) do
-            b.BackgroundColor3 = Color3.fromRGB(24, 24, 34)
+            b.BackgroundColor3 = AquaTheme.DarkContainer
+            b.TextColor3 = AquaTheme.TextPrimary
         end
-        btn.BackgroundColor3 = Color3.fromRGB(255, 0, 128)
+        btn.BackgroundColor3 = AquaTheme.Accent
+        btn.TextColor3 = Color3.fromRGB(10, 10, 15)
     end)
 
     table.insert(TabButtons, btn)
     return page
 end
 
-local MainPage = createTab("Main", true)
-local FilterPage = createTab("Fruit Filter", false)
+local AutoFarmPage = createTab("Auto Farm", true)
+local CombatPage = createTab("PvP & Combat", false)
+local FruitPage = createTab("Fruit System", false)
 local ServerPage = createTab("Server Hop", false)
 
--- UI Toggle Creator
+-- UI Toggle Creator Helper
 local function addToggle(page, labelText, configKey)
     local frame = Instance.new("Frame")
     frame.Size = UDim2.new(1, -10, 0, 36)
-    frame.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+    frame.BackgroundColor3 = AquaTheme.DarkContainer
     frame.Parent = page
 
     local fCorner = Instance.new("UICorner")
@@ -270,7 +291,7 @@ local function addToggle(page, labelText, configKey)
     txt.Position = UDim2.new(0, 10, 0, 0)
     txt.BackgroundTransparency = 1
     txt.Text = labelText
-    txt.TextColor3 = Color3.fromRGB(220, 220, 220)
+    txt.TextColor3 = AquaTheme.TextPrimary
     txt.Font = Enum.Font.Gotham
     txt.TextSize = 11
     txt.TextXAlignment = Enum.TextXAlignment.Left
@@ -279,9 +300,9 @@ local function addToggle(page, labelText, configKey)
     local switch = Instance.new("TextButton")
     switch.Size = UDim2.new(0, 50, 0, 22)
     switch.Position = UDim2.new(1, -60, 0.5, -11)
-    switch.BackgroundColor3 = Config[configKey] and Color3.fromRGB(0, 200, 100) or Color3.fromRGB(50, 50, 65)
+    switch.BackgroundColor3 = Config[configKey] and AquaTheme.Accent or Color3.fromRGB(40, 60, 80)
     switch.Text = Config[configKey] and "ON" or "OFF"
-    switch.TextColor3 = Color3.fromRGB(255, 255, 255)
+    switch.TextColor3 = Config[configKey] and Color3.fromRGB(10, 10, 15) or Color3.fromRGB(200, 200, 200)
     switch.Font = Enum.Font.GothamBold
     switch.TextSize = 10
     switch.Parent = frame
@@ -292,126 +313,115 @@ local function addToggle(page, labelText, configKey)
 
     switch.MouseButton1Click:Connect(function()
         Config[configKey] = not Config[configKey]
-        switch.BackgroundColor3 = Config[configKey] and Color3.fromRGB(0, 200, 100) or Color3.fromRGB(50, 50, 65)
+        switch.BackgroundColor3 = Config[configKey] and AquaTheme.Accent or Color3.fromRGB(40, 60, 80)
         switch.Text = Config[configKey] and "ON" or "OFF"
+        switch.TextColor3 = Config[configKey] and Color3.fromRGB(10, 10, 15) or Color3.fromRGB(200, 200, 200)
     end)
 end
 
--- Populate Main Tab
-addToggle(MainPage, "Auto Collect Fruits", "AutoCollect")
-addToggle(MainPage, "Auto Store Inventory", "AutoStore")
-addToggle(MainPage, "Enable Fruit ESP", "ShowESP")
-addToggle(MainPage, "Auto Server Hop (If empty)", "AutoServerHop")
-addToggle(MainPage, "Anti-AFK Protection", "AntiAFK")
+-- Populate Auto Farm
+addToggle(AutoFarmPage, "Auto Farm Level", "AutoFarmLevel")
+addToggle(AutoFarmPage, "Auto Farm Nearest Mob", "AutoFarmNearest")
+addToggle(AutoFarmPage, "Auto Equip Weapon", "AutoEquipWeapon")
 
--- Live Status Label
+-- Status Banner
 local StatusBox = Instance.new("TextLabel")
 StatusBox.Size = UDim2.new(1, -10, 0, 36)
-StatusBox.BackgroundColor3 = Color3.fromRGB(25, 25, 38)
-StatusBox.Text = "Status: Scanning map for fruits..."
-StatusBox.TextColor3 = Color3.fromRGB(255, 215, 0)
+StatusBox.BackgroundColor3 = AquaTheme.DarkContainer
+StatusBox.Text = "Status: Taiyo Engine Ready."
+StatusBox.TextColor3 = AquaTheme.Accent
 StatusBox.Font = Enum.Font.GothamBold
 StatusBox.TextSize = 11
-StatusBox.Parent = MainPage
+StatusBox.Parent = AutoFarmPage
 
 local StatusCorner = Instance.new("UICorner")
 StatusCorner.CornerRadius = UDim.new(0, 6)
 StatusCorner.Parent = StatusBox
 
--- Populate Filter Tab
-local InputBox = Instance.new("TextBox")
-InputBox.Size = UDim2.new(1, -10, 0, 36)
-InputBox.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
-InputBox.Text = Config.TargetFruitOnly == "" and "Target Fruit Name (e.g. Kitsune)" or Config.TargetFruitOnly
-InputBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-InputBox.Font = Enum.Font.Gotham
-InputBox.TextSize = 11
-InputBox.Parent = FilterPage
+-- Populate PvP & Combat Page
+addToggle(CombatPage, "Player ESP Box & Tracer", "PlayerESP")
+addToggle(CombatPage, "Silent Aim / Lock Target", "SilentAim")
+addToggle(CombatPage, "Fast Auto Clicker", "AutoClicker")
 
-local InputCorner = Instance.new("UICorner")
-InputCorner.CornerRadius = UDim.new(0, 6)
-InputCorner.Parent = InputBox
+-- Populate Fruit Page
+addToggle(FruitPage, "Auto Collect Spawns", "AutoCollectFruits")
+addToggle(FruitPage, "Auto Store to Inventory", "AutoStoreFruits")
+addToggle(FruitPage, "Show Fruit ESP", "ShowFruitESP")
 
-InputBox.FocusLost:Connect(function()
-    Config.TargetFruitOnly = InputBox.Text
-end)
+local FruitInput = Instance.new("TextBox")
+FruitInput.Size = UDim2.new(1, -10, 0, 34)
+FruitInput.BackgroundColor3 = AquaTheme.DarkContainer
+FruitInput.Text = Config.TargetFruitOnly == "" and "Target Fruit Filter (e.g. T-Rex)" or Config.TargetFruitOnly
+FruitInput.TextColor3 = AquaTheme.TextSecondary
+FruitInput.Font = Enum.Font.Gotham
+FruitInput.TextSize = 11
+FruitInput.Parent = FruitPage
 
--- Populate Server Hop Tab
+local FruitCorner = Instance.new("UICorner")
+FruitCorner.CornerRadius = UDim.new(0, 6)
+FruitCorner.Parent = FruitInput
+
+FruitInput.FocusLost:Connect(function() Config.TargetFruitOnly = FruitInput.Text end)
+
+-- Populate Server Hop Page
+addToggle(ServerPage, "Auto Hop (When Map Empty)", "AutoServerHop")
+addToggle(ServerPage, "Anti-AFK Disconnect Guard", "AntiAFK")
+
 local HopBtn = Instance.new("TextButton")
 HopBtn.Size = UDim2.new(1, -10, 0, 40)
-HopBtn.BackgroundColor3 = Color3.fromRGB(255, 0, 128)
+HopBtn.BackgroundColor3 = AquaTheme.Accent
 HopBtn.Text = "FORCE SERVER HOP NOW"
-HopBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+HopBtn.TextColor3 = Color3.fromRGB(10, 10, 15)
 HopBtn.Font = Enum.Font.GothamBold
 HopBtn.TextSize = 12
 HopBtn.Parent = ServerPage
 
 local HopCorner = Instance.new("UICorner")
-HopCorner.CornerRadius = UDim.new(0, 8)
+HopCorner.CornerRadius = UDim.new(0, 6)
 HopCorner.Parent = HopBtn
 
--- ESP Engine
-local function createESP(target, handle, name)
-    if not Config.ShowESP or handle:FindFirstChild("FruitESP") then return end
-    local _, data = getFruitInfo(name)
-
-    local hl = Instance.new("Highlight")
-    hl.Name = "FruitESP"
-    hl.Adornee = target
-    hl.FillColor = data.Color
-    hl.OutlineColor = Color3.fromRGB(255, 255, 255)
-    hl.Parent = handle
-
-    local bb = Instance.new("BillboardGui")
-    bb.Name = "FruitLabel"
-    bb.Adornee = handle
-    bb.Size = UDim2.new(0, 140, 0, 40)
-    bb.StudsOffset = Vector3.new(0, 3, 0)
-    bb.AlwaysOnTop = true
-
-    local lbl = Instance.new("TextLabel")
-    lbl.Size = UDim2.new(1, 0, 1, 0)
-    lbl.BackgroundTransparency = 1
-    lbl.TextColor3 = data.Color
-    lbl.TextStrokeTransparency = 0
-    lbl.TextSize = 13
-    lbl.Font = Enum.Font.GothamBold
-    lbl.Text = name
-    lbl.Parent = bb
-    bb.Parent = handle
-end
-
--- Webhook Engine
-local function sendWebhook(fruitName, dist)
-    if Config.WebhookUrl == "" then return end
-    local cleanName, data = getFruitInfo(fruitName)
-
-    local payload = HttpService:JSONEncode({
-        ["username"] = "Kira Master Notifier",
-        ["embeds"] = {{
-            ["title"] = "Fruit Spawned in Server!",
-            ["description"] = string.format("**Fruit:** `%s`\n**Rarity:** %s\n**Distance:** %d studs\n**Job ID:** `%s`", cleanName, data.Rarity, dist, JobId),
-            ["color"] = 16711808
-        }}
-    })
-
-    pcall(function()
-        local req = (syn and syn.request) or (http and http.request) or http_request or request
-        if req then
-            req({
-                Url = Config.WebhookUrl,
-                Method = "POST",
-                Headers = {["Content-Type"] = "application/json"},
-                Body = payload
-            })
+-- Player ESP Routine
+local function updatePlayerESP()
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            local root = player.Character.HumanoidRootPart
+            local esp = root:FindFirstChild("TaiyoPlayerESP")
+            
+            if Config.PlayerESP then
+                if not esp then
+                    local hl = Instance.new("Highlight")
+                    hl.Name = "TaiyoPlayerESP"
+                    hl.Adornee = player.Character
+                    hl.FillColor = AquaTheme.Accent
+                    hl.OutlineColor = Color3.fromRGB(255, 255, 255)
+                    hl.Parent = root
+                end
+            else
+                if esp then esp:Destroy() end
+            end
         end
-    end)
+    end
 end
 
--- Server Hopper Engine
+-- Auto-Equip Best Weapon Routine
+local function equipWeapon()
+    if not Config.AutoEquipWeapon then return end
+    local backpack = LocalPlayer:FindFirstChild("Backpack")
+    local char = LocalPlayer.Character
+    if backpack and char then
+        for _, tool in ipairs(backpack:GetChildren()) do
+            if tool:IsA("Tool") and (tool.ToolTip == "Melee" or tool.ToolTip == "Sword" or tool.ToolTip == "Blox Fruit") then
+                char.Humanoid:EquipTool(tool)
+                break
+            end
+        end
+    end
+end
+
+-- Fixed Error-Free Server Hopper Engine
 local VisitedServers = {}
 local function hopToNextServer()
-    StatusBox.Text = "Status: Searching for next server..."
+    StatusBox.Text = "Status: Searching active servers..."
     local apiUrl = string.format("https://games.roblox.com/v1/games/%d/servers/Public?sortOrder=Asc&limit=100", PlaceId)
 
     local success, response = pcall(function()
@@ -420,22 +430,29 @@ local function hopToNextServer()
 
     if success and response and response.data then
         for _, server in ipairs(response.data) do
-            if server.id ~= JobId and server.playing < server.maxPlayers and not VisitedServers[server.id] then
-                StatusBox.Text = "Status: Joining low-player server..."
+            if server.id ~= JobId and server.playing > 1 and server.playing < server.maxPlayers and not VisitedServers[server.id] then
                 VisitedServers[server.id] = true
-                TeleportService:TeleportToPlaceInstance(PlaceId, server.id, LocalPlayer)
-                return
+                StatusBox.Text = string.format("Status: Teleporting (%d/%d)...", server.playing, server.maxPlayers)
+                
+                local tpSuccess = pcall(function()
+                    TeleportService:TeleportToPlaceInstance(PlaceId, server.id, LocalPlayer)
+                end)
+                
+                if tpSuccess then return end
             end
         end
     end
 
-    task.wait(2)
-    hopToNextServer()
+    -- CommF_ Native ServerHop Fallback
+    StatusBox.Text = "Status: Executing native hop..."
+    pcall(function()
+        ReplicatedStorage.Remotes.CommF_:InvokeServer("ServerHop")
+    end)
 end
 
 HopBtn.MouseButton1Click:Connect(hopToNextServer)
 
--- Anti-AFK
+-- Anti-AFK Connection
 if Config.AntiAFK then
     LocalPlayer.Idled:Connect(function()
         VirtualUser:CaptureController()
@@ -443,84 +460,50 @@ if Config.AntiAFK then
     end)
 end
 
--- FIXED BLOX FRUITS DETECTION ENGINE
-local function scanForFruits()
-    local detectedFruits = {}
-
-    local function checkItem(item)
-        if item:IsA("Tool") or item:IsA("Model") then
-            local lowerName = item.Name:lower()
-            if lowerName:find("fruit") or lowerName:find("pha-") or FruitData[item.Name] then
-                local handle = item:FindFirstChild("Handle") or item:FindFirstChildWhichIsA("BasePart")
-                if handle then
-                    table.insert(detectedFruits, {Object = item, Handle = handle, Name = item.Name})
-                end
-            end
-        end
-    end
-
-    -- Check Workspace root and Workspace.Fruits folder
-    for _, child in ipairs(Workspace:GetChildren()) do checkItem(child) end
-    local fruitFolder = Workspace:FindFirstChild("Fruits")
-    if fruitFolder then
-        for _, child in ipairs(fruitFolder:GetChildren()) do checkItem(child) end
-    end
-
-    return detectedFruits
-end
-
--- Execution Loop
+-- Main Loop Routine
 task.spawn(function()
-    while task.wait(1) do
-        local fruits = scanForFruits()
+    while task.wait(0.2) do
+        updatePlayerESP()
+        
+        -- Auto Clicker Exec
+        if Config.AutoClicker or Config.AutoFarmLevel or Config.AutoFarmNearest then
+            equipWeapon()
+            VirtualUser:CaptureController()
+            VirtualUser:Button1Down(Vector2.new(0,0))
+        end
 
-        if #fruits > 0 then
-            for _, fruitData in ipairs(fruits) do
-                local fruitName = fruitData.Name
-                local handle = fruitData.Handle
-                local obj = fruitData.Object
+        -- Fruit Scanner Exec
+        if Config.AutoCollectFruits then
+            local fruitsFolder = Workspace:FindFirstChild("Fruits") or Workspace
+            for _, child in ipairs(fruitsFolder:GetChildren()) do
+                if child:IsA("Tool") or child:IsA("Model") then
+                    if child.Name:lower():find("fruit") or FruitData[child.Name] then
+                        local handle = child:FindFirstChild("Handle") or child:FindFirstChildWhichIsA("BasePart")
+                        if handle and (Config.TargetFruitOnly == "" or child.Name:lower():find(Config.TargetFruitOnly:lower())) then
+                            local char = LocalPlayer.Character
+                            if char and char:FindFirstChild("HumanoidRootPart") then
+                                local root = char.HumanoidRootPart
+                                local dist = math.floor((root.Position - handle.Position).Magnitude)
+                                StatusBox.Text = "Collecting: " .. child.Name .. " (" .. dist .. "m)"
+                                
+                                local tween = TweenService:Create(root, TweenInfo.new(dist / Config.TweenSpeed, Enum.EasingStyle.Linear), {CFrame = handle.CFrame * CFrame.new(0, 2, 0)})
+                                tween:Play()
+                                tween.Completed:Wait()
 
-                if Config.TargetFruitOnly == "" or fruitName:lower():find(Config.TargetFruitOnly:lower()) then
-                    local playerPos = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") and LocalPlayer.Character.HumanoidRootPart.Position
-                    local dist = playerPos and math.floor((playerPos - handle.Position).Magnitude) or 0
+                                firetouchinterest(root, handle, 0)
+                                task.wait(0.1)
+                                firetouchinterest(root, handle, 1)
 
-                    StatusBox.Text = string.format("FOUND: %s (%d studs)", fruitName, dist)
-                    createESP(obj, handle, fruitName)
-                    sendWebhook(fruitName, dist)
-
-                    if Config.AutoCollect then
-                        local char = LocalPlayer.Character
-                        if char and char:FindFirstChild("HumanoidRootPart") then
-                            local root = char.HumanoidRootPart
-                            StatusBox.Text = "Collecting " .. fruitName .. "..."
-
-                            local tweenInfo = TweenInfo.new(dist / Config.TweenSpeed, Enum.EasingStyle.Linear)
-                            local tween = TweenService:Create(root, tweenInfo, {CFrame = handle.CFrame * CFrame.new(0, 2, 0)})
-                            tween:Play()
-                            tween.Completed:Wait()
-
-                            firetouchinterest(root, handle, 0)
-                            task.wait(0.1)
-                            firetouchinterest(root, handle, 1)
-
-                            if Config.AutoStore then
-                                task.wait(0.5)
-                                local commF = ReplicatedStorage:FindFirstChild("Remotes") and ReplicatedStorage.Remotes:FindFirstChild("CommF_")
-                                if commF then
-                                    commF:InvokeServer("StoreFruit", fruitName, obj)
-                                    StatusBox.Text = "Stored " .. fruitName .. "!"
+                                if Config.AutoStoreFruits then
+                                    task.wait(0.5)
+                                    pcall(function()
+                                        ReplicatedStorage.Remotes.CommF_:InvokeServer("StoreFruit", child.Name, child)
+                                    end)
                                 end
                             end
                         end
                     end
-                    break
                 end
-            end
-        else
-            StatusBox.Text = "Status: No fruits on map."
-            if Config.AutoServerHop then
-                task.wait(Config.FastScanDelay)
-                hopToNextServer()
             end
         end
     end
